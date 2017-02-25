@@ -61,6 +61,16 @@ public class Ball {
         ballXpos += ballXdir;
         ballYpos += ballYdir;
         setBallRect(ballXpos, ballYpos);
+        intersectionWithBorders();
+    }
+
+    private void intersectionWithBorders() {
+        if((getBallXpos() <  0) || (getBallXpos() > 670)){
+            setNewDirection(-getBallXdir(), getBallYdir());
+        }
+        if(getBallYpos() < 0){
+            setNewDirection(getBallXdir(), -getBallYdir());
+        }
     }
 
 

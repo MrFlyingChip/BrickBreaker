@@ -11,23 +11,42 @@ import java.awt.event.KeyListener;
  * Created by MrFlyingChip on 21.02.2017.
  */
 public class Gameplay extends JPanel implements KeyListener, ActionListener{
-    private static final int ballPosX = 120;
-    private static final int ballPosY = 350;
-    private static final int ballXdir = -1;
-    private static final int ballYdir = -2;
-    private static final int ballDiameter = 20;
+    //start ball position
+    public static final int BALL_POS_X = 120;
+    public static final int BAL__POS_Y = 350;
+    //start ball direction
+    //direction = speed
+    public static final int BALL_X_DIR = -1;
+    public static final int BALL_Y_DIR = -2;
+    //ball diameter
+    public static final int BALL_DIAMETER = 20;
+    //start player position
+    public static final int PLAYER_X = 310;
+    public static final int PLAYER_Y = 550;
+    //player size
+    public static final int PLAYER_WIDTH = 100;
+    public static final int PLAYER_HEIGHT = 8;
+
 
     private boolean play = false;
-    private int score = 0;
-    private int totalBricks = 21;
+    private int totalBricks;
     private Timer timer;
     private int delay = 8;
-    private int playerX = 310;
     private MapGenerator map;
     private Ball ball;
-    public Gameplay(){
-        map = new MapGenerator(3, 7);
-        ball = new Ball(ballDiameter, ballPosX, ballPosY, ballXdir, ballYdir);
+    private Player player;
+    private Controller controller;
+
+    public Gameplay(int totalBricks){
+        this.totalBricks = totalBricks;
+        map = new MapGenerator(4, 10);
+        ball = new Ball(BALL_DIAMETER, BALL_POS_X, BAL__POS_Y, BALL_X_DIR, BALL_Y_DIR);
+        player = new Player(PLAYER_X, PLAYER_Y, PLAYER_WIDTH, PLAYER_HEIGHT);
+        controller = new Controller();
+        startLevel();
+    }
+
+    private void startLevel(){
         addKeyListener(this);
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
@@ -35,36 +54,25 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener{
         timer.start();
     }
 
+    @Override
     public void paint(Graphics g){
         //background
-        g.setColor(Color.black);
-        g.fillRect(1, 1, 692, 592);
+        GraphicsController.drawBackground(g);
         //drawing map
         map.draw((Graphics2D)g);
-
         //borders
-        g.setColor(Color.yellow);
-        g.fillRect(0,0, 3, 592);
-        g.fillRect(0,0, 692, 3);
-        g.fillRect(691,0, 3, 592);
-
+        GraphicsController.drawBorders(g);
         //the paddle
-        g.setColor(Color.green);
-        g.fillRect(playerX, 550, 100, 8);
-
+        GraphicsController.drawPaddle(g, player);
         //the ball
-        g.setColor(Color.yellow);
-        g.fillOval(ball.getBallXpos(), ball.getBallYpos(), ball.getBallDiameter(), ball.getBallDiameter());
-
+        GraphicsController.drawBall(g, ball);
         g.dispose();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        timer.start();
-
         if(play){
-            if(ball.getBallRect().intersects(new Rectangle(playerX, 550, 100, 8))){
+            if(ball.getBallRect().intersects(player.getPlayerRect())){
                 ball.setNewDirection(ball.getBallXdir(), -ball.getBallYdir());
             }
 
@@ -75,29 +83,22 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener{
                         int brickHeight = map.brickHeight;
                         int brickX = j * map.brickWidth + 80;
                         int brickY = i * map.brickHeight + 50;
-
                         Rectangle brickRect = new Rectangle(brickX, brickY, brickWidth, brickHeight);
-
                         if(ball.getBallRect().intersects(brickRect)){
                             map.setBrickValue(0, i, j);
                             totalBricks--;
-                            score += 5;
-
+                            Game.setScore(Game.getScore() + 5);
+                            if(ball.getBallRect().x + 19 <= brickRect.x || ball.getBallRect().x + 1 >= brickRect.x + brickRect.width){
+                                ball.setNewDirection(-ball.getBallXdir(), ball.getBallYdir());
+                            }else{
+                                ball.setNewDirection(ball.getBallXdir(), -ball.getBallYdir());
+                            }
 
                         }
-
-
                     }
                 }
             }
            ball.ballMotion();
-            if((ball.getBallXpos() <  0) || (ball.getBallXpos() > 670)){
-                ball.setNewDirection(-ball.getBallXdir(), ball.getBallYdir());
-            }
-            if(ball.getBallYpos() < 0){
-                ball.setNewDirection(ball.getBallXdir(), -ball.getBallYdir());
-            }
-
         }
         repaint();
     }
@@ -105,33 +106,14 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener{
     @Override
     public void keyTyped(KeyEvent e) {}
 
+    //method perfom when any key is pressed
     @Override
     public void keyPressed(KeyEvent e) {
-        if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            if(playerX >= 600){
-                playerX = 600;
-            }else{
-                moveRight();
-            }
-        }
-        if(e.getKeyCode() == KeyEvent.VK_LEFT) {
-            if(playerX < 10){
-                playerX = 10;
-            }else{
-                moveLeft();
-            }
-        }
+        play = true;
+        controller.movePlayer(player, e);
     }
 
-    public void moveRight() {
-        play = true;
-        playerX += 20;
-    }
 
-    public void moveLeft() {
-        play = true;
-        playerX -= 20;
-    }
     @Override
     public void keyReleased(KeyEvent e) {}
 }
